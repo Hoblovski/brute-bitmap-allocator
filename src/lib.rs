@@ -1,3 +1,5 @@
+#![no_std]
+
 /// An unoptimized first-fit bitmap allocator.
 
 use spin::Mutex;
@@ -10,7 +12,7 @@ pub struct LinearBitMap {
 }
 
 impl LinearBitMap {
-    /// By default, all bits are unallocated.
+    /// Create a bitmap with size bits. By default, all bits are unallocated.
     pub fn new(size: usize) -> Self {
         assert!(size <= MAX_LEN);
         LinearBitMap {
