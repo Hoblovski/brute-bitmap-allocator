@@ -10,6 +10,9 @@ trait BitAllocator {
     ///
     /// Similar to alloc, but the returned index is aligned to align.
     fn alloc_aligned(&mut self, n: usize, alignment: usize) -> Option<usize>;
+    /// Deallocate n consecutive bits, starting from the begin-th bit.
+    ///
+    /// Note we do not require bytes to be allocated first before they are deallocated.
     fn dealloc(&mut self, begin: usize, n: usize);
 }
 

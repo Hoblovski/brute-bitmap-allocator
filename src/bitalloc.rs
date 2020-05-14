@@ -101,6 +101,8 @@ impl LinearBitMap {
 
     // If some, result > begin and bm[result] != bm[begin]
     // Could return self.end
+    //
+    // TODO: to speed up, multiple bits can be skipped at once
     fn next_toggle(&mut self, begin: &RawIndex) -> RawIndex {
         let b = self.bitmap.get(begin);
         let mut i = *begin;
@@ -110,6 +112,7 @@ impl LinearBitMap {
         return i;
     }
 
+    // TODO: same optimization as above
     fn first_of(&mut self, b: bool) -> RawIndex {
         let i = RawIndex::new();
         if self.bitmap.get(&i) == b { return i; }
