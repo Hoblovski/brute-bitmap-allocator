@@ -4,15 +4,12 @@ use crate::BitAllocator;
 /// An unoptimized first-fit bitmap allocator.
 
 const ELEM_WIDTH: usize = 64;
-const ELEM_CNT: usize = 0x600000 / 4096 / ELEM_WIDTH;
 
 #[derive(PartialOrd, PartialEq, Debug, Copy, Clone)]
 struct RawIndex(usize, usize); // index, bit
 
 impl RawIndex {
     fn new() -> Self { RawIndex(0, 0) }
-
-    fn max() -> Self { RawIndex(ELEM_CNT - 1, ELEM_WIDTH - 1) }
 
     fn to_int(&self) -> usize { self.0 * ELEM_WIDTH + self.1 }
 
@@ -51,17 +48,15 @@ impl Sub for RawIndex {
     }
 }
 
-struct RawBitMap([i64; ELEM_CNT]);
+struct RawBitMap<'a>(&'a mut [i64]);
 
-impl RawBitMap {
+impl<'a> RawBitMap<'a> {
     fn get(&self, i: &RawIndex) -> bool {
-        assert!(i.0 <= ELEM_CNT);
         assert!(i.1 < 64);
         (self.0[i.0] >> i.1) & 1 == 1
     }
 
     fn set(&mut self, i: &RawIndex, b: bool) {
-        assert!(i.0 <= ELEM_CNT);
         assert!(i.1 < 64);
         self.0[i.0] &= !(1 << i.1);
         self.0[i.0] |= (if b {1} else {0} << i.1);
@@ -76,15 +71,15 @@ impl RawBitMap {
     }
 }
 
-pub struct LinearBitMap {
+pub struct LinearBitMap<'a> {
     size: usize,
-    bitmap: RawBitMap,
+    bitmap: RawBitMap<'a>,
     end: RawIndex
 }
 
 fn div_ceil(a: usize, b: usize) -> usize { (a+b-1)/b }
 
-impl LinearBitMap {
+impl<'a> LinearBitMap<'a> {
     /// Allocate one bit. Fast-path.
     fn alloc_1(&mut self) -> Option<usize> {
         let bm = &mut self.bitmap;
@@ -118,16 +113,20 @@ impl LinearBitMap {
         if self.bitmap.get(&i) == b { return i; }
         self.next_toggle(&i)
     }
-}
 
-impl BitAllocator for LinearBitMap {
-    fn new(size: usize) -> Self {
-        assert!(size <= ELEM_CNT * ELEM_WIDTH);
+    pub fn new_raw(size: usize, buf: &'a mut [i64]) -> Self {
+        assert!(size <= buf.len() * ELEM_WIDTH);
         LinearBitMap {
-            size: size,
-            bitmap: RawBitMap([0; ELEM_CNT]),
+            size,
+            bitmap: RawBitMap(buf),
             end: RawIndex(size / ELEM_WIDTH, size % ELEM_WIDTH),
         }
+    }
+}
+
+impl<'a> BitAllocator for LinearBitMap<'a> {
+    fn new(size: usize) -> Self {
+        unimplemented!()
     }
 
     fn alloc(&mut self, n: usize) -> Option<usize> {

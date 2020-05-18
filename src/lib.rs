@@ -36,8 +36,8 @@ mod tests {
 
     #[test]
     fn test_alloc() {
-        inner_test_alloc(b::LinearBitMap::new(10));
-        inner_test_alloc(B::LinearBitMap::new(10));
+        inner_test_alloc(b::LinearBitMap::new_raw(10, [0i64; 1].as_mut()));
+        inner_test_alloc(B::LinearBitMap::new_raw([false; 10].as_mut()));
     }
 
     fn inner_test_dealloc<T: BitAllocator>(mut bm: T) {
@@ -56,8 +56,8 @@ mod tests {
 
     #[test]
     fn test_dealloc() {
-        inner_test_dealloc(b::LinearBitMap::new(10));
-        inner_test_dealloc(B::LinearBitMap::new(10));
+        inner_test_dealloc(b::LinearBitMap::new_raw(10,[0i64; 1].as_mut()));
+        inner_test_dealloc(B::LinearBitMap::new_raw([false; 10].as_mut()));
     }
 
     fn inner_test_alloc_aligned<T: BitAllocator>(mut bm: T) {
@@ -77,15 +77,17 @@ mod tests {
 
     #[test]
     fn test_alloc_aligned() {
-        inner_test_alloc_aligned(b::LinearBitMap::new(10));
-        inner_test_alloc_aligned(B::LinearBitMap::new(10));
+        inner_test_alloc_aligned(b::LinearBitMap::new_raw(10, [0i64; 1].as_mut()));
+        inner_test_alloc_aligned(B::LinearBitMap::new_raw([false; 10].as_mut()));
     }
 
     #[test]
     fn test_byte_bit_equivalent() {
         const N: usize = 1000;
-        let mut bm_bit = crate::bitalloc::LinearBitMap::new(N);
-        let mut bm_byte = crate::bytealloc::LinearBitMap::new(N);
+        let mut bit_buf = [0i64; (N+63) / 64];
+        let mut bm_bit = crate::bitalloc::LinearBitMap::new_raw(N, bit_buf.as_mut());
+        let mut byte_buf = [false; N];
+        let mut bm_byte = crate::bytealloc::LinearBitMap::new_raw(byte_buf.as_mut());
 
         let randint = |b: usize, e: usize| { b + (rand::random::<usize>() % (e - b + 1)) };
         for i in 0..100000 {

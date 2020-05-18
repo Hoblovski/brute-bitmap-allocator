@@ -2,14 +2,12 @@ use crate::BitAllocator;
 
 /// An unoptimized first-fit bitmap allocator.
 
-const MAX_LEN: usize = 0x600000 / 4096;
-
-pub struct LinearBitMap {
+pub struct LinearBitMap<'a> {
     size: usize,
-    bitmap: [bool; MAX_LEN] // Allow concurrent access.
+    bitmap: &'a mut [bool]
 }
 
-impl LinearBitMap {
+impl<'a> LinearBitMap<'a> {
     /// Allocate one bit. Fast-path.
     fn alloc_1(&mut self) -> Option<usize> {
         let bm = &mut self.bitmap;
@@ -21,15 +19,18 @@ impl LinearBitMap {
         }
         None
     }
+
+    pub fn new_raw(buf: &'a mut [bool]) -> Self {
+        LinearBitMap {
+            size: buf.len(),
+            bitmap: buf
+        }
+    }
 }
 
-impl BitAllocator for LinearBitMap {
+impl<'a> BitAllocator for LinearBitMap<'a> {
     fn new(size: usize) -> Self {
-        assert!(size <= MAX_LEN);
-        LinearBitMap {
-            size,
-            bitmap: [false; MAX_LEN]
-        }
+        unimplemented!()
     }
 
     fn alloc(&mut self, n: usize) -> Option<usize> {
